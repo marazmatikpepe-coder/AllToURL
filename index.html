@@ -934,10 +934,10 @@ async function uploadToImgbb(file, onProgress){
       try{
         const res = JSON.parse(xhr.responseText);
         if (res.success) resolve({ view: res.data.url_viewer || res.data.url, direct: res.data.image?.url || res.data.url });
-        else reject(res);
-      }catch(e){ reject(e); }
+        else reject(new Error(res.error?.message || 'ImgBB отклонил файл'));
+      }catch(e){ reject(new Error('Некорректный ответ ImgBB')); }
     };
-    xhr.onerror = reject;
+    xhr.onerror = () => reject(new Error('Сетевая ошибка при обращении к ImgBB'));
     xhr.send(fd);
   });
 }
@@ -952,9 +952,9 @@ async function uploadToCatbox(file, onProgress){
     xhr.onload = () => {
       const url = xhr.responseText.trim();
       if (xhr.status===200 && url.startsWith('http')) resolve({ view: url, direct: url });
-      else reject(new Error('Catbox error: ' + xhr.responseText));
+      else reject(new Error(`Catbox вернул ошибку (код ${xhr.status}): ${url || 'пустой ответ'}`));
     };
-    xhr.onerror = reject;
+    xhr.onerror = () => reject(new Error('Сетевая ошибка при обращении к Catbox (возможно, блокировка CORS)'));
     xhr.send(fd);
   });
 }
@@ -966,7 +966,7 @@ $('uploadBtn').onclick = async () => {
   btn.classList.add('sliding');
   const box = $('resultsBox');
   box.style.display = 'block';
-  box.innerHTML = `<div class="results-head"><span>Загрузка файлов</span></div>`;
+  box.innerHTML = `<div class="results-head"><span id="resultsHeadText">Загрузка файлов</span></div>`;
 
   const rows = {};
   pending.forEach(p => {
@@ -978,6 +978,7 @@ $('uploadBtn').onclick = async () => {
   });
 
   const results = [];
+  let failCount = 0;
   for (const p of pending){
     const row = rows[p.id];
     const bar = row.querySelector('.bar i');
@@ -993,11 +994,12 @@ $('uploadBtn').onclick = async () => {
       results.push(item);
       if (user) await addLibraryItem(data); // сохраняем в библиотеку только для вошедших пользователей
     }catch(e){
-      row.innerHTML = `<span class="rname" style="color:var(--danger)">${p.file.name} — ошибка</span>`;
+      failCount++;
+      row.innerHTML = `<span class="rname" style="color:var(--danger)" title="${(e.message||'').replace(/"/g,'')}">${p.file.name} — ${e.message || 'ошибка'}</span>`;
     }
   }
 
-  box.innerHTML = `<div class="results-head"><span>Готово · ${results.length} файл(ов)</span></div>`;
+  $('resultsHeadText').textContent = `Готово · ${results.length} файл(ов)` + (failCount ? `, ошибок: ${failCount}` : '');
   results.forEach(item => {
     item._fmt = 'view';
     const row = document.createElement('div');
