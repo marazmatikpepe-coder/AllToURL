@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AllToURL — файлы в ссылки</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236c5ce7'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -539,6 +540,13 @@ const CONFIG = {
   }
 };
 
+if (location.protocol === 'file:'){
+  const warn = document.createElement('div');
+  warn.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999;background:#ff5c7a;color:#1a0006;font:600 13px Inter,sans-serif;padding:10px 16px;text-align:center;';
+  warn.textContent = 'Сайт открыт как файл (file://) — вход в аккаунт и Firestore не будут работать. Запустите через локальный сервер, например: python -m http.server, и откройте http://localhost:8000';
+  document.addEventListener('DOMContentLoaded', () => document.body.prepend(warn));
+}
+
 const fbApp = initializeApp(CONFIG.FIREBASE);
 try{ getAnalytics(fbApp); }catch(e){ /* analytics недоступна (например, в превью) — не критично */ }
 const auth = getAuth(fbApp);
@@ -592,16 +600,25 @@ initLoader();
 /* ---------------- FIREBASE AUTH STATE ---------------- */
 onAuthStateChanged(auth, async (fbUser) => {
   if (fbUser){
-    const ref = doc(db, 'users', fbUser.uid);
-    let snap = await getDoc(ref);
-    if (!snap.exists()){
-      const profile = { name: fbUser.displayName || (fbUser.email||'').split('@')[0], email: fbUser.email || '', avatar: fbUser.photoURL || null };
-      await setDoc(ref, profile);
-      snap = await getDoc(ref);
+    try{
+      const ref = doc(db, 'users', fbUser.uid);
+      let snap = await getDoc(ref);
+      if (!snap.exists()){
+        const profile = { name: fbUser.displayName || (fbUser.email||'').split('@')[0], email: fbUser.email || '', avatar: fbUser.photoURL || null };
+        await setDoc(ref, profile);
+        snap = await getDoc(ref);
+      }
+      const d = snap.data();
+      user = { uid: fbUser.uid, name: d.name, email: d.email, avatar: d.avatar };
+      await loadLibrary();
+    }catch(e){
+      // Firestore недоступен (например, правила ещё не настроены) — не блокируем вход,
+      // показываем профиль на основе данных из самого аккаунта, без библиотеки.
+      console.warn('Firestore profile/library sync failed:', e);
+      user = { uid: fbUser.uid, name: fbUser.displayName || (fbUser.email||'').split('@')[0], email: fbUser.email || '', avatar: fbUser.photoURL || null };
+      library = [];
+      toast('Вход выполнен, но библиотека/профиль не синхронизируются — проверьте правила Firestore');
     }
-    const d = snap.data();
-    user = { uid: fbUser.uid, name: d.name, email: d.email, avatar: d.avatar };
-    await loadLibrary();
   } else {
     user = null;
     library = [];
