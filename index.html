@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AllToURL — файлы в ссылки</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#090b10;
+    --bg-2:#0d1017;
+    --surface:#141824;
+    --surface-2:#1b2130;
+    --border:rgba(255,255,255,.08);
+    --border-strong:rgba(255,255,255,.16);
+    --text:#eef0f6;
+    --text-dim:#8891a5;
+    --text-dimmer:#5a6376;
+    --indigo:#6c5ce7;
+    --cyan:#22d3ee;
+    --amber:#ffb020;
+    --danger:#ff5c7a;
+    --grad: linear-gradient(115deg,var(--indigo),var(--cyan));
+    --radius:18px;
+    --radius-sm:12px;
+    --shadow-lg: 0 20px 60px -20px rgba(0,0,0,.6);
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(108,92,231,.16), transparent 60%),
+      radial-gradient(1000px 500px at 90% 0%, rgba(34,211,238,.10), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  h1,h2,h3,.display{font-family:'Space Grotesk',sans-serif;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  button{font-family:inherit;}
+  ::selection{background:rgba(108,92,231,.35);}
+
+  /* ---------- LOADER ---------- */
+  #loader{
+    position:fixed;inset:0;z-index:200;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
+    background:var(--bg);
+    transition:opacity .6s ease, visibility .6s ease;
+  }
+  #loader.hidden{opacity:0;visibility:hidden;pointer-events:none;}
+  .loader-mark{
+    width:56px;height:56px;border-radius:16px;position:relative;
+    background:var(--surface);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .loader-mark::before{
+    content:"";position:absolute;inset:-2px;border-radius:18px;padding:2px;
+    background:var(--grad);
+    -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;
+    animation:spin 1.6s linear infinite;
+  }
+  .loader-mark span{font-family:'Space Grotesk';font-weight:700;font-size:20px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  #loader p{color:var(--text-dim);font-size:13.5px;letter-spacing:.02em;}
+  #loader .dot{display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--cyan);margin:0 2px;animation:blink 1.4s infinite;}
+  #loader .dot:nth-child(2){animation-delay:.2s;}
+  #loader .dot:nth-child(3){animation-delay:.4s;}
+  @keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+
+  /* ---------- APP ---------- */
+  #app{opacity:0;transition:opacity .6s ease .1s;min-height:100vh;display:flex;flex-direction:column;}
+  #app.show{opacity:1;}
+
+  header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:20px 32px;position:sticky;top:0;z-index:40;
+    backdrop-filter:blur(14px);
+    background:rgba(9,11,16,.6);
+    border-bottom:1px solid var(--border);
+  }
+  .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:19px;letter-spacing:-.02em;cursor:default;}
+  .logo .dot-mark{width:10px;height:10px;border-radius:3px;background:var(--grad);flex:none;}
+  .logo b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+
+  .account{display:flex;align-items:center;gap:12px;cursor:pointer;padding:6px 10px 6px 6px;border-radius:100px;transition:background .2s;}
+  .account:hover{background:var(--surface);}
+  .account .uname{font-size:14px;font-weight:500;color:var(--text);}
+  .avatar{
+    width:34px;height:34px;border-radius:50%;flex:none;
+    background:var(--grad);display:flex;align-items:center;justify-content:center;
+    font-weight:600;font-size:13px;color:#0a0c12;
+    border:1px solid var(--border-strong);
+    background-size:cover;background-position:center;
+    overflow:hidden;
+  }
+
+  main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px 100px;position:relative;}
+
+  .hero-label{color:var(--text-dimmer);font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:14px;}
+  .hero-title{font-size:clamp(28px,4vw,42px);font-weight:600;margin:0 0 34px;text-align:center;letter-spacing:-.02em;}
+  .hero-title .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+
+  /* DROPZONE */
+  #dropzone{
+    width:min(640px,90vw);
+    border-radius:var(--radius);
+    border:1.5px dashed var(--border-strong);
+    background:var(--surface);
+    padding:56px 32px;
+    display:flex;flex-direction:column;align-items:center;gap:14px;
+    cursor:pointer;
+    position:relative;
+    transition:border-color .25s, transform .2s, background .25s;
+    overflow:hidden;
+  }
+  #dropzone::before{
+    content:"";position:absolute;inset:0;opacity:0;transition:opacity .3s;
+    background:radial-gradient(500px 200px at 50% 0%, rgba(108,92,231,.18), transparent 70%);
+  }
+  #dropzone:hover{border-color:rgba(108,92,231,.5);transform:translateY(-2px);}
+  #dropzone:hover::before{opacity:1;}
+  #dropzone.drag{border-color:var(--cyan);background:var(--surface-2);box-shadow:0 0 0 4px rgba(34,211,238,.08);}
+  .dz-icon{
+    width:56px;height:56px;border-radius:16px;background:var(--surface-2);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;position:relative;z-index:1;
+  }
+  .dz-icon svg{width:24px;height:24px;stroke:var(--cyan);}
+  #dropzone .dz-title{font-size:16px;font-weight:600;position:relative;z-index:1;}
+  #dropzone .dz-sub{font-size:13px;color:var(--text-dim);text-align:center;position:relative;z-index:1;}
+  #dropzone .dz-sub b{color:var(--text);font-weight:500;}
+  #fileInput{display:none;}
+
+  .formats-row{display:flex;gap:8px;margin-top:36px;flex-wrap:wrap;justify-content:center;}
+  .format-pill{
+    font-size:12px;color:var(--text-dim);border:1px solid var(--border);padding:6px 12px;border-radius:100px;
+    display:flex;align-items:center;gap:6px;background:var(--surface);
+  }
+  .format-pill i{width:6px;height:6px;border-radius:50%;background:var(--cyan);}
+
+  /* ---------- SHTORKA (upload sheet) ---------- */
+  #sheetOverlay{
+    position:fixed;inset:0;background:rgba(4,5,8,.55);backdrop-filter:blur(4px);
+    z-index:60;opacity:0;visibility:hidden;transition:opacity .3s, visibility .3s;
+  }
+  #sheetOverlay.open{opacity:1;visibility:visible;}
+  #sheet{
+    position:fixed;top:0;left:0;right:0;z-index:61;
+    background:var(--bg-2);border-bottom:1px solid var(--border);
+    box-shadow:var(--shadow-lg);
+    transform:translateY(-100%);transition:transform .38s cubic-bezier(.2,.8,.2,1);
+    padding:28px 32px 30px;
+  }
+  #sheet.open{transform:translateY(0);}
+  .sheet-head{display:flex;align-items:flex-start;justify-content:space-between;max-width:1040px;margin:0 auto 20px;}
+  .sheet-head h3{margin:0 0 4px;font-size:18px;font-weight:600;}
+  .sheet-head p{margin:0;font-size:13.5px;color:var(--text-dim);}
+  .sheet-close{
+    width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--surface);
+    color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;
+    transition:.2s;
+  }
+  .sheet-close:hover{background:var(--surface-2);color:var(--text);border-color:var(--border-strong);}
+
+  .sheet-body{max-width:1040px;margin:0 auto;display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap;}
+
+  .thumbs-drop{
+    flex:1;min-width:260px;border:1.5px dashed var(--border);border-radius:var(--radius-sm);padding:16px;
+    display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;min-height:104px;transition:border-color .2s;
+  }
+  .thumbs-drop.drag{border-color:var(--cyan);}
+  .thumb{
+    width:84px;height:84px;border-radius:12px;position:relative;overflow:hidden;flex:none;
+    background:var(--surface-2);border:1px solid var(--border);
+  }
+  .thumb img,.thumb video{width:100%;height:100%;object-fit:cover;display:block;}
+  .thumb .kind{
+    position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,.55);border-radius:6px;padding:2px 6px;
+    font-size:9.5px;letter-spacing:.04em;text-transform:uppercase;color:#fff;
+  }
+  .thumb .remove{
+    position:absolute;top:4px;right:4px;width:19px;height:19px;border-radius:50%;background:#fff;color:#111;
+    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;cursor:pointer;line-height:0;
+    box-shadow:0 2px 6px rgba(0,0,0,.35);
+  }
+  .add-more{
+    width:84px;height:84px;border-radius:12px;border:1.5px dashed var(--border-strong);background:transparent;
+    display:flex;align-items:center;justify-content:center;color:var(--text-dim);cursor:pointer;flex:none;font-size:22px;
+    transition:.2s;
+  }
+  .add-more:hover{border-color:var(--cyan);color:var(--cyan);}
+
+  .sheet-actions{display:flex;align-items:center;gap:14px;flex:none;}
+  .btn-upload{
+    background:var(--grad);color:#0a0c12;border:none;padding:14px 26px;border-radius:100px;font-weight:600;font-size:14.5px;
+    cursor:pointer;transition:transform .25s cubic-bezier(.3,.8,.3,1), box-shadow .25s;
+    box-shadow:0 8px 24px -8px rgba(108,92,231,.6);white-space:nowrap;
+  }
+  .btn-upload:hover{transform:translateY(-1px);}
+  .btn-upload:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+  .btn-upload.sliding{transform:translateX(0);}
+
+  .results-box{
+    width:340px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);
+    padding:16px;flex:none;
+    animation:pop .35s cubic-bezier(.2,.8,.2,1);
+  }
+  @keyframes pop{from{opacity:0;transform:translateX(-10px) scale(.97);}to{opacity:1;transform:none;}}
+  .results-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .results-head span{font-size:12.5px;color:var(--text-dim);}
+  .link-fmt{position:relative;}
+  .eye-btn{
+    width:26px;height:26px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);
+    color:var(--text-dim);display:flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+  .eye-menu{
+    position:absolute;top:30px;right:0;background:var(--bg-2);border:1px solid var(--border-strong);
+    border-radius:10px;padding:6px;box-shadow:var(--shadow-lg);z-index:5;display:none;min-width:170px;
+  }
+  .eye-menu.open{display:block;}
+  .eye-menu button{
+    width:100%;text-align:left;background:none;border:none;color:var(--text);padding:8px 10px;border-radius:7px;
+    font-size:12.5px;cursor:pointer;
+  }
+  .eye-menu button:hover{background:var(--surface-2);}
+  .eye-menu button.active{color:var(--cyan);}
+
+  .result-row{
+    display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12.5px;
+  }
+  .result-row:last-child{border-bottom:none;}
+  .result-row .rname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-dim);}
+  .result-row .rlink{color:var(--cyan);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px;}
+  .result-row .bar{height:3px;background:var(--surface-2);border-radius:3px;overflow:hidden;flex:1;}
+  .result-row .bar i{display:block;height:100%;background:var(--grad);width:0%;transition:width .2s;}
+  .copy-mini{background:none;border:none;color:var(--text-dimmer);cursor:pointer;padding:2px;flex:none;}
+  .copy-mini:hover{color:var(--text);}
+
+  /* ---------- PROFILE MODAL ---------- */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(4,5,8,.6);backdrop-filter:blur(4px);z-index:80;
+    display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:.25s;
+    padding:24px;
+  }
+  .modal-overlay.open{opacity:1;visibility:visible;}
+  .modal{
+    background:var(--bg-2);border:1px solid var(--border);border-radius:20px;width:100%;max-width:640px;
+    max-height:82vh;overflow:auto;box-shadow:var(--shadow-lg);
+    transform:scale(.96);transition:transform .3s cubic-bezier(.2,.8,.2,1);
+  }
+  .modal-overlay.open .modal{transform:scale(1);}
+  .modal-pad{padding:28px 30px;}
+  .modal-close{
+    position:sticky;top:16px;float:right;margin:16px 16px -40px 0;width:32px;height:32px;border-radius:50%;
+    border:1px solid var(--border);background:var(--surface);color:var(--text-dim);cursor:pointer;z-index:2;
+  }
+
+  .profile-top{display:flex;align-items:center;gap:18px;margin-bottom:26px;}
+  .avatar-lg{
+    width:76px;height:76px;border-radius:50%;background:var(--grad);flex:none;cursor:pointer;position:relative;
+    display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:600;color:#0a0c12;
+    background-size:cover;background-position:center;overflow:hidden;border:2px solid var(--border-strong);
+  }
+  .avatar-lg::after{
+    content:"Изменить";position:absolute;inset:0;background:rgba(0,0,0,.55);color:#fff;font-size:10px;
+    display:flex;align-items:center;justify-content:center;opacity:0;transition:.2s;font-family:'Inter';font-weight:500;
+  }
+  .avatar-lg:hover::after{opacity:1;}
+  .profile-name-row{display:flex;align-items:center;gap:8px;}
+  .profile-name-row h2{margin:0;font-size:20px;}
+  .menu-dots{position:relative;}
+  .dots-btn{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:18px;padding:4px 8px;border-radius:8px;}
+  .dots-btn:hover{background:var(--surface);color:var(--text);}
+  .dots-menu{
+    position:absolute;top:30px;left:0;background:var(--bg-2);border:1px solid var(--border-strong);border-radius:10px;
+    padding:6px;min-width:170px;box-shadow:var(--shadow-lg);display:none;z-index:5;
+  }
+  .dots-menu.open{display:block;}
+  .dots-menu button{width:100%;text-align:left;background:none;border:none;color:var(--text);padding:8px 10px;border-radius:7px;font-size:13px;cursor:pointer;}
+  .dots-menu button:hover{background:var(--surface-2);}
+  .profile-email{color:var(--text-dim);font-size:13px;margin-top:2px;}
+
+  .lib-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .lib-head h3{margin:0;font-size:14.5px;color:var(--text-dim);font-weight:500;letter-spacing:.02em;text-transform:uppercase;}
+  .lib-select-btn{background:none;border:1px solid var(--border);color:var(--text-dim);font-size:12.5px;padding:6px 12px;border-radius:100px;cursor:pointer;}
+  .lib-select-btn:hover{border-color:var(--border-strong);color:var(--text);}
+
+  .lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px;}
+  .lib-item{
+    aspect-ratio:1;border-radius:12px;background:var(--surface);border:1px solid var(--border);cursor:pointer;
+    position:relative;overflow:hidden;
+  }
+  .lib-item img,.lib-item video{width:100%;height:100%;object-fit:cover;}
+  .lib-item .badge{position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,.55);border-radius:6px;padding:2px 5px;font-size:9px;color:#fff;text-transform:uppercase;}
+  .lib-item .check{
+    position:absolute;top:6px;right:6px;width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,.7);
+    background:rgba(0,0,0,.3);
+  }
+  .lib-item.selected .check{background:var(--cyan);border-color:var(--cyan);}
+  .lib-item.selected{outline:2px solid var(--cyan);}
+  .lib-empty{color:var(--text-dimmer);font-size:13.5px;text-align:center;padding:40px 0;}
+
+  .bulk-bar{
+    display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--border);
+    border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:13px;
+  }
+  .bulk-bar b{color:var(--cyan);}
+  .bulk-bar .spacer{flex:1;}
+  .bulk-bar button{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;}
+  .bulk-bar button:hover{color:var(--text);}
+  .bulk-bar button.danger:hover{color:var(--danger);}
+
+  /* file viewer */
+  .viewer-overlay{position:fixed;inset:0;background:rgba(2,2,4,.85);z-index:90;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:.25s;}
+  .viewer-overlay.open{opacity:1;visibility:visible;}
+  .viewer-top{position:absolute;top:20px;right:24px;display:flex;gap:10px;}
+  .viewer-top button{
+    width:38px;height:38px;border-radius:10px;background:var(--surface);border:1px solid var(--border-strong);
+    color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+  .viewer-top button:hover{background:var(--surface-2);}
+  .viewer-top button.danger:hover{color:var(--danger);border-color:var(--danger);}
+  .viewer-media{max-width:88vw;max-height:80vh;border-radius:14px;overflow:hidden;box-shadow:var(--shadow-lg);}
+  .viewer-media img,.viewer-media video,.viewer-media audio{max-width:88vw;max-height:80vh;display:block;}
+
+  /* AUTH gate */
+  .auth-overlay{
+    position:fixed;inset:0;background:rgba(4,5,8,.55);backdrop-filter:blur(4px);z-index:70;
+    display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:.25s;padding:20px;
+  }
+  .auth-overlay.open{opacity:1;visibility:visible;}
+  .auth-card{
+    background:var(--bg-2);border:1px solid var(--border);border-radius:20px;padding:32px;width:100%;max-width:380px;
+    position:relative;box-shadow:var(--shadow-lg);transform:scale(.96);transition:transform .3s;
+  }
+  .auth-overlay.open .auth-card{transform:scale(1);}
+  .auth-x{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--text-dimmer);font-size:18px;cursor:pointer;}
+  .auth-card h2{margin:0 0 6px;font-size:20px;}
+  .auth-card p{margin:0 0 22px;color:var(--text-dim);font-size:13.5px;}
+  .field{margin-bottom:12px;}
+  .field label{display:block;font-size:12px;color:var(--text-dim);margin-bottom:6px;}
+  .field input{
+    width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 13px;
+    color:var(--text);font-size:14px;outline:none;transition:border-color .2s;
+  }
+  .field input:focus{border-color:var(--indigo);}
+  .btn-primary{
+    width:100%;background:var(--grad);color:#0a0c12;border:none;padding:12px;border-radius:10px;font-weight:600;
+    font-size:14px;cursor:pointer;margin-top:6px;
+  }
+  .btn-google{
+    width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:11px;border-radius:10px;
+    font-size:13.5px;cursor:pointer;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .btn-google:hover{border-color:var(--border-strong);}
+  .auth-switch{text-align:center;font-size:12.5px;color:var(--text-dim);margin-top:16px;}
+  .auth-switch a{color:var(--cyan);cursor:pointer;text-decoration:none;}
+  .auth-err{color:var(--danger);font-size:12.5px;margin:-4px 0 10px;min-height:0;}
+
+  .toast{
+    position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--surface-2);border:1px solid var(--border-strong);color:var(--text);
+    padding:12px 20px;border-radius:100px;font-size:13px;z-index:100;opacity:0;visibility:hidden;
+    transition:.3s;box-shadow:var(--shadow-lg);
+  }
+  .toast.show{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0);}
+
+  @media(max-width:640px){
+    header{padding:16px 18px;}
+    .sheet-body{flex-direction:column;}
+    .results-box{width:100%;}
+    #sheet{padding:22px 18px 24px;}
+    main{padding:24px 16px 90px;}
+  }
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-mark"><span>A</span></div>
+  <p>Определяем ваше местоположение<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></p>
+</div>
+
+<div id="app">
+  <header>
+    <div class="logo"><span class="dot-mark"></span>All<b>To</b>URL</div>
+    <div class="account" id="accountBtn">
+      <span class="uname" id="unameLabel">Гость</span>
+      <div class="avatar" id="headerAvatar">Г</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="hero-label">Файл → ссылка · за секунды</div>
+    <h1 class="hero-title">Перетащите файл — получите<br><span class="g">прямую ссылку</span></h1>
+
+    <div id="dropzone">
+      <div class="dz-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg>
+      </div>
+      <div class="dz-title">Нажмите для начала загрузки</div>
+      <div class="dz-sub">или перетащите, или вставьте файл — <b>Ctrl+V</b></div>
+    </div>
+
+    <div class="formats-row">
+      <div class="format-pill"><i></i>Изображения / GIF — до 20 МБ</div>
+      <div class="format-pill"><i></i>Видео / Аудио — до 199 МБ</div>
+    </div>
+  </main>
+</div>
+
+<input type="file" id="fileInput" multiple accept="image/*,video/*,audio/*">
+
+<!-- Upload sheet -->
+<div id="sheetOverlay"></div>
+<div id="sheet">
+  <div class="sheet-head">
+    <div>
+      <h3>Продолжите загрузку</h3>
+      <p>Выберите, вставьте или перетащите сюда ещё файлы</p>
+    </div>
+    <button class="sheet-close" id="sheetClose">✕</button>
+  </div>
+  <div class="sheet-body">
+    <div class="thumbs-drop" id="thumbsDrop">
+      <div class="add-more" id="addMoreBtn">+</div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-upload" id="uploadBtn" disabled>Загрузить</button>
+      <div class="results-box" id="resultsBox" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Auth gate -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-card">
+    <button class="auth-x" id="authClose">✕</button>
+    <h2 id="authTitle">Войдите или зарегистрируйтесь</h2>
+    <p>Профиль и библиотека файлов доступны только авторизованным пользователям</p>
+    <div class="auth-err" id="authErr"></div>
+    <div class="field"><label>Почта</label><input type="email" id="authEmail" placeholder="you@mail.com"></div>
+    <div class="field"><label>Пароль</label><input type="password" id="authPass" placeholder="••••••••"></div>
+    <button class="btn-primary" id="authSubmit">Войти</button>
+    <button class="btn-google" id="authGoogle">
+      <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.9 32.6 29.4 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.1 8 3l5.7-5.7C34.5 5.3 29.5 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.2-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.9 18.9 13 24 13c3.1 0 5.9 1.1 8 3l5.7-5.7C34.5 6.3 29.5 4 24 4c-7.6 0-14.1 4.3-17.4 10.7z"/><path fill="#4CAF50" d="M24 44c5.3 0 10.2-2 13.9-5.4l-6.4-5.4c-2 1.4-4.6 2.3-7.5 2.3-5.4 0-9.9-3.4-11.5-8.2l-6.5 5C9.8 39.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.7 2-1.9 3.7-3.5 5l6.4 5.4C41.7 35.7 44 30.3 44 24c0-1.2-.1-2.4-.4-3.5z"/></svg>
+      Продолжить с Google
+    </button>
+    <div class="auth-switch" id="authSwitch">Нет аккаунта? <a id="authSwitchLink">Зарегистрироваться</a></div>
+  </div>
+</div>
+
+<!-- Profile modal -->
+<div class="modal-overlay" id="profileOverlay">
+  <div class="modal">
+    <button class="modal-close" id="profileClose">✕</button>
+    <div class="modal-pad">
+      <div class="profile-top">
+        <div class="avatar-lg" id="avatarLg"></div>
+        <div>
+          <div class="profile-name-row">
+            <h2 id="profileName">Гость</h2>
+            <div class="menu-dots">
+              <button class="dots-btn" id="dotsBtn">⋯</button>
+              <div class="dots-menu" id="dotsMenu">
+                <button id="copyProfileLink">Ссылка на профиль</button>
+                <button id="editNameBtn">Изменить имя</button>
+                <button id="logoutBtn" style="color:var(--danger);">Выйти</button>
+              </div>
+            </div>
+          </div>
+          <div class="profile-email" id="profileEmail">—</div>
+        </div>
+      </div>
+
+      <div id="bulkBar" class="bulk-bar" style="display:none;">
+        <span>Выбрано: <b id="selCount">0</b></span>
+        <div class="spacer"></div>
+        <button id="copySelected">Скопировать ссылки</button>
+        <button class="danger" id="deleteSelected">Удалить</button>
+        <button id="cancelSelect">Отмена</button>
+      </div>
+
+      <div class="lib-head">
+        <h3>Библиотека</h3>
+        <button class="lib-select-btn" id="libSelectBtn">Выбрать</button>
+      </div>
+      <div class="lib-grid" id="libGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- File viewer -->
+<div class="viewer-overlay" id="viewerOverlay">
+  <div class="viewer-top">
+    <button id="viewerSelect" title="Выбрать">☑</button>
+    <button id="viewerDelete" class="danger" title="Удалить">🗑</button>
+    <button id="viewerClose" title="Закрыть">✕</button>
+  </div>
+  <div class="viewer-media" id="viewerMedia"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+/* =========================================================
+   AllToURL
+   -----------------------------------------------------------
+   Файлы: ImgBB (картинки/gif) + Catbox (видео/аудио).
+   Аккаунты и библиотека: Firebase Auth + Firestore.
+   ========================================================= */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-analytics.js";
+import {
+  getAuth, onAuthStateChanged, createUserWithEmailAndPassword,
+  signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, setDoc, updateDoc,
+  collection, addDoc, deleteDoc, getDocs, query, orderBy
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+
+const CONFIG = {
+  IMGBB_KEY: "9036a0d6a5caf9f166870c6ee5707e47", // ⚠️ см. предупреждение в чате про публичный ключ
+  CATBOX_ENDPOINT: "https://catbox.moe/user/api.php",
+  FIREBASE: {
+    apiKey: "AIzaSyBFYHALjo9apuzbXW3fWmOtIe9PEsuC0ic",
+    authDomain: "alltourl.firebaseapp.com",
+    projectId: "alltourl",
+    storageBucket: "alltourl.firebasestorage.app",
+    messagingSenderId: "99361282989",
+    appId: "1:99361282989:web:bd22eeb8e836593ec05f24",
+    measurementId: "G-T7ZEJWCFY7"
+  }
+};
+
+const fbApp = initializeApp(CONFIG.FIREBASE);
+try{ getAnalytics(fbApp); }catch(e){ /* analytics недоступна (например, в превью) — не критично */ }
+const auth = getAuth(fbApp);
+const db = getFirestore(fbApp);
+
+let user = null; // {uid, name, email, avatar}
+let library = []; // {id, name, kind, viewUrl, directUrl, ts}
+let pending = [];  // files attached in the sheet, before upload
+let selectMode = false;
+let selectedIds = new Set();
+let isRegisterMode = false;
+
+function authErrMsg(code){
+  const map = {
+    'auth/email-already-in-use': 'Такой email уже зарегистрирован',
+    'auth/invalid-credential': 'Неверный email или пароль',
+    'auth/wrong-password': 'Неверный email или пароль',
+    'auth/user-not-found': 'Аккаунт с таким email не найден',
+    'auth/weak-password': 'Пароль слишком простой (минимум 6 символов)',
+    'auth/invalid-email': 'Некорректный email',
+    'auth/popup-closed-by-user': 'Окно входа было закрыто'
+  };
+  return map[code] || 'Что-то пошло не так, попробуйте ещё раз';
+}
+
+const $ = (id) => document.getElementById(id);
+const toastEl = $('toast');
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastEl._t);
+  toastEl._t = setTimeout(()=>toastEl.classList.remove('show'), 2200);
+}
+
+/* ---------------- LOADER / GEO CHECK ---------------- */
+function initLoader(){
+  const done = () => {
+    $('loader').classList.add('hidden');
+    $('app').classList.add('show');
+  };
+  const timer = setTimeout(done, 1000);
+  if (navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(
+      () => {}, () => {}, {timeout:900}
+    );
+  }
+  // всегда открываем сайт через ~1с, независимо от результата геолокации
+}
+initLoader();
+
+/* ---------------- FIREBASE AUTH STATE ---------------- */
+onAuthStateChanged(auth, async (fbUser) => {
+  if (fbUser){
+    const ref = doc(db, 'users', fbUser.uid);
+    let snap = await getDoc(ref);
+    if (!snap.exists()){
+      const profile = { name: fbUser.displayName || (fbUser.email||'').split('@')[0], email: fbUser.email || '', avatar: fbUser.photoURL || null };
+      await setDoc(ref, profile);
+      snap = await getDoc(ref);
+    }
+    const d = snap.data();
+    user = { uid: fbUser.uid, name: d.name, email: d.email, avatar: d.avatar };
+    await loadLibrary();
+  } else {
+    user = null;
+    library = [];
+  }
+  renderAccount();
+});
+
+async function loadLibrary(){
+  if (!user) { library = []; return; }
+  const q = query(collection(db, 'users', user.uid, 'library'), orderBy('ts','desc'));
+  const snaps = await getDocs(q);
+  library = snaps.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+async function saveUserField(fields){
+  await updateDoc(doc(db, 'users', user.uid), fields);
+  Object.assign(user, fields);
+}
+async function addLibraryItem(item){
+  const ref = await addDoc(collection(db, 'users', user.uid, 'library'), item);
+  library.unshift({ id: ref.id, ...item });
+}
+async function removeLibraryItems(ids){
+  for (const id of ids){
+    await deleteDoc(doc(db, 'users', user.uid, 'library', id));
+  }
+  library = library.filter(i => !ids.includes(i.id));
+}
+function renderAccount(){
+  if (user){
+    $('unameLabel').textContent = user.name;
+    $('profileName').textContent = user.name;
+    $('profileEmail').textContent = user.email || '';
+    setAvatarNode($('headerAvatar'), user);
+    setAvatarNode($('avatarLg'), user);
+  } else {
+    $('unameLabel').textContent = 'Гость';
+    setAvatarNode($('headerAvatar'), null);
+  }
+}
+function setAvatarNode(node, u){
+  if (u && u.avatar){
+    node.style.backgroundImage = `url(${u.avatar})`;
+    node.textContent = '';
+  } else {
+    node.style.backgroundImage = '';
+    node.textContent = (u && u.name ? u.name[0] : 'Г').toUpperCase();
+  }
+}
+/* ---------------- AUTH MODAL ---------------- */
+$('accountBtn').onclick = () => {
+  if (user) openProfile();
+  else openAuth();
+};
+function openAuth(){ $('authOverlay').classList.add('open'); $('authErr').textContent=''; }
+function closeAuth(){ $('authOverlay').classList.remove('open'); }
+$('authClose').onclick = closeAuth;
+$('authOverlay').addEventListener('click', e => { if(e.target.id==='authOverlay') closeAuth(); });
+
+$('authSwitchLink').onclick = () => {
+  isRegisterMode = !isRegisterMode;
+  $('authTitle').textContent = isRegisterMode ? 'Создайте аккаунт' : 'Войдите или зарегистрируйтесь';
+  $('authSubmit').textContent = isRegisterMode ? 'Зарегистрироваться' : 'Войти';
+  $('authSwitch').firstChild.textContent = isRegisterMode ? 'Уже есть аккаунт? ' : 'Нет аккаунта? ';
+  $('authSwitchLink').textContent = isRegisterMode ? 'Войти' : 'Зарегистрироваться';
+};
+
+$('authSubmit').onclick = async () => {
+  const email = $('authEmail').value.trim();
+  const pass = $('authPass').value;
+  if (!email || !pass){ $('authErr').textContent = 'Заполните почту и пароль'; return; }
+  if (pass.length < 6){ $('authErr').textContent = 'Пароль должен быть не короче 6 символов'; return; }
+  $('authErr').textContent = '';
+  $('authSubmit').disabled = true;
+  try{
+    if (isRegisterMode) await createUserWithEmailAndPassword(auth, email, pass);
+    else await signInWithEmailAndPassword(auth, email, pass);
+    closeAuth();
+    toast(isRegisterMode ? 'Аккаунт создан' : 'Вы вошли в аккаунт');
+  }catch(e){
+    $('authErr').textContent = authErrMsg(e.code);
+  }finally{
+    $('authSubmit').disabled = false;
+  }
+};
+$('authGoogle').onclick = async () => {
+  try{
+    await signInWithPopup(auth, new GoogleAuthProvider());
+    closeAuth();
+    toast('Вы вошли через Google');
+  }catch(e){
+    $('authErr').textContent = authErrMsg(e.code);
+  }
+};
+
+/* ---------------- PROFILE MODAL ---------------- */
+function openProfile(){
+  renderLibrary();
+  $('profileOverlay').classList.add('open');
+}
+$('profileClose').onclick = () => $('profileOverlay').classList.remove('open');
+$('profileOverlay').addEventListener('click', e => { if(e.target.id==='profileOverlay') $('profileOverlay').classList.remove('open'); });
+
+$('avatarLg').onclick = () => {
+  const inp = document.createElement('input');
+  inp.type='file'; inp.accept='image/*';
+  inp.onchange = async () => {
+    if (!inp.files[0]) return;
+    toast('Загружаем аватар…');
+    try{
+      const url = await uploadToImgbb(inp.files[0]);
+      await saveUserField({ avatar: url });
+      renderAccount();
+      toast('Аватар обновлён');
+    }catch(e){ toast('Не удалось загрузить аватар'); }
+  };
+  inp.click();
+};
+
+$('dotsBtn').onclick = (e) => { e.stopPropagation(); $('dotsMenu').classList.toggle('open'); };
+document.addEventListener('click', () => $('dotsMenu').classList.remove('open'));
+$('copyProfileLink').onclick = () => {
+  navigator.clipboard.writeText(location.origin + '/u/' + (user?.uid || 'guest'));
+  toast('Ссылка на профиль скопирована');
+};
+$('editNameBtn').onclick = async () => {
+  const name = prompt('Новое имя:', user?.name || '');
+  if (name && name.trim()){
+    await saveUserField({ name: name.trim() });
+    renderAccount();
+  }
+};
+$('logoutBtn').onclick = async () => {
+  await signOut(auth);
+  $('profileOverlay').classList.remove('open');
+  toast('Вы вышли из аккаунта');
+};
+
+function renderLibrary(){
+  const grid = $('libGrid');
+  grid.innerHTML = '';
+  if (!library.length){
+    grid.innerHTML = '<div class="lib-empty" style="grid-column:1/-1;">Пока нет загруженных файлов</div>';
+    return;
+  }
+  library.slice().reverse().forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'lib-item' + (selectedIds.has(item.id) ? ' selected' : '');
+    el.innerHTML = mediaThumb(item) + `<div class="badge">${item.kind}</div><div class="check"></div>`;
+    el.onclick = () => {
+      if (selectMode){ toggleSelect(item.id); renderLibrary(); }
+      else openViewer(item);
+    };
+    grid.appendChild(el);
+  });
+}
+function mediaThumb(item){
+  if (item.kind==='image'||item.kind==='gif') return `<img src="${item.viewUrl}" loading="lazy">`;
+  if (item.kind==='video') return `<video src="${item.viewUrl}" muted></video>`;
+  return `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-dim);font-size:22px;">♪</div>`;
+}
+
+$('libSelectBtn').onclick = () => {
+  selectMode = !selectMode;
+  selectedIds.clear();
+  $('bulkBar').style.display = selectMode ? 'flex' : 'none';
+  $('libSelectBtn').textContent = selectMode ? 'Готово' : 'Выбрать';
+  updateSelCount();
+  renderLibrary();
+};
+function toggleSelect(id){
+  if (selectedIds.has(id)) selectedIds.delete(id); else selectedIds.add(id);
+  updateSelCount();
+}
+function updateSelCount(){ $('selCount').textContent = selectedIds.size; }
+$('cancelSelect').onclick = () => { selectMode=false; selectedIds.clear(); $('bulkBar').style.display='none'; $('libSelectBtn').textContent='Выбрать'; renderLibrary(); };
+$('copySelected').onclick = () => {
+  const links = library.filter(i=>selectedIds.has(i.id)).map(i=>i.directUrl).join('\n');
+  if (!links){ toast('Ничего не выбрано'); return; }
+  navigator.clipboard.writeText(links);
+  toast('Ссылки скопированы');
+};
+$('deleteSelected').onclick = async () => {
+  await removeLibraryItems([...selectedIds]);
+  selectedIds.clear(); updateSelCount();
+  renderLibrary();
+  toast('Файлы удалены');
+};
+
+/* ---------------- FILE VIEWER ---------------- */
+let viewerItem = null;
+function openViewer(item){
+  viewerItem = item;
+  const box = $('viewerMedia');
+  if (item.kind==='image'||item.kind==='gif') box.innerHTML = `<img src="${item.viewUrl}">`;
+  else if (item.kind==='video') box.innerHTML = `<video src="${item.viewUrl}" controls autoplay></video>`;
+  else box.innerHTML = `<audio src="${item.viewUrl}" controls autoplay style="width:340px;"></audio>`;
+  $('viewerOverlay').classList.add('open');
+}
+$('viewerClose').onclick = () => $('viewerOverlay').classList.remove('open');
+$('viewerSelect').onclick = () => {
+  $('viewerOverlay').classList.remove('open');
+  selectMode = true; selectedIds.add(viewerItem.id);
+  $('bulkBar').style.display='flex'; $('libSelectBtn').textContent='Готово';
+  updateSelCount(); renderLibrary();
+};
+$('viewerDelete').onclick = async () => {
+  await removeLibraryItems([viewerItem.id]);
+  $('viewerOverlay').classList.remove('open');
+  renderLibrary();
+  toast('Файл удалён');
+};
+
+/* ---------------- DROPZONE + SHEET ---------------- */
+const dropzone = $('dropzone');
+const fileInput = $('fileInput');
+dropzone.onclick = () => fileInput.click();
+fileInput.onchange = () => handleNewFiles([...fileInput.files]);
+
+['dragover','dragleave','drop'].forEach(evt => {
+  dropzone.addEventListener(evt, e => {
+    e.preventDefault();
+    if (evt==='dragover') dropzone.classList.add('drag');
+    else dropzone.classList.remove('drag');
+    if (evt==='drop') handleNewFiles([...e.dataTransfer.files]);
+  });
+});
+
+document.addEventListener('paste', e => {
+  const items = [...(e.clipboardData?.items || [])];
+  const files = items.filter(i=>i.kind==='file').map(i=>i.getAsFile()).filter(Boolean);
+  if (files.length) handleNewFiles(files);
+});
+
+const thumbsDrop = $('thumbsDrop');
+['dragover','dragleave','drop'].forEach(evt => {
+  thumbsDrop.addEventListener(evt, e => {
+    e.preventDefault(); e.stopPropagation();
+    if (evt==='dragover') thumbsDrop.classList.add('drag');
+    else thumbsDrop.classList.remove('drag');
+    if (evt==='drop') handleNewFiles([...e.dataTransfer.files]);
+  });
+});
+$('addMoreBtn').onclick = () => fileInput.click();
+
+function fileKind(file){
+  if (file.type.includes('gif')) return 'gif';
+  if (file.type.startsWith('image/')) return 'image';
+  if (file.type.startsWith('video/')) return 'video';
+  if (file.type.startsWith('audio/')) return 'audio';
+  return null;
+}
+function handleNewFiles(files){
+  const accepted = [];
+  for (const f of files){
+    const kind = fileKind(f);
+    if (!kind){ toast(`Формат «${f.name}» не поддерживается`); continue; }
+    const limit = (kind==='image'||kind==='gif') ? 20*1024*1024 : 199*1024*1024;
+    if (f.size > limit){ toast(`«${f.name}» превышает лимит (${kind==='video'||kind==='audio'?'199':'20'} МБ)`); continue; }
+    accepted.push({file:f, kind, id: crypto.randomUUID(), progress:0, status:'pending'});
+  }
+  if (!accepted.length) return;
+  pending.push(...accepted);
+  openSheet();
+  renderThumbs();
+}
+function openSheet(){
+  $('sheetOverlay').classList.add('open');
+  $('sheet').classList.add('open');
+}
+function closeSheet(){
+  $('sheetOverlay').classList.remove('open');
+  $('sheet').classList.remove('open');
+  setTimeout(() => {
+    pending = [];
+    renderThumbs();
+    $('resultsBox').style.display = 'none';
+    $('resultsBox').innerHTML = '';
+    const btn = $('uploadBtn');
+    btn.disabled = true; btn.textContent = 'Загрузить';
+  }, 350);
+}
+$('sheetClose').onclick = closeSheet;
+
+function renderThumbs(){
+  thumbsDrop.querySelectorAll('.thumb').forEach(n=>n.remove());
+  pending.forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'thumb';
+    const url = URL.createObjectURL(p.file);
+    if (p.kind==='image'||p.kind==='gif') el.innerHTML = `<img src="${url}">`;
+    else if (p.kind==='video') el.innerHTML = `<video src="${url}" muted></video>`;
+    else el.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:22px;color:var(--text-dim);">♪</div>`;
+    el.innerHTML += `<div class="kind">${p.kind}</div><div class="remove" data-id="${p.id}">✕</div>`;
+    el.querySelector('.remove').onclick = (e) => {
+      e.stopPropagation();
+      pending = pending.filter(x=>x.id!==p.id);
+      renderThumbs();
+    };
+    thumbsDrop.insertBefore(el, $('addMoreBtn'));
+  });
+  $('uploadBtn').disabled = pending.length===0;
+}
+
+/* ---------------- UPLOAD LOGIC ---------------- */
+async function uploadToImgbb(file, onProgress){
+  return new Promise((resolve, reject) => {
+    const fd = new FormData();
+    fd.append('image', file);
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `https://api.imgbb.com/1/upload?key=${CONFIG.IMGBB_KEY}`);
+    xhr.upload.onprogress = (e) => { if (onProgress && e.lengthComputable) onProgress(e.loaded/e.total*100); };
+    xhr.onload = () => {
+      try{
+        const res = JSON.parse(xhr.responseText);
+        if (res.success) resolve({ view: res.data.url_viewer || res.data.url, direct: res.data.image?.url || res.data.url });
+        else reject(res);
+      }catch(e){ reject(e); }
+    };
+    xhr.onerror = reject;
+    xhr.send(fd);
+  });
+}
+async function uploadToCatbox(file, onProgress){
+  return new Promise((resolve, reject) => {
+    const fd = new FormData();
+    fd.append('reqtype','fileupload');
+    fd.append('fileToUpload', file);
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', CONFIG.CATBOX_ENDPOINT);
+    xhr.upload.onprogress = (e) => { if (onProgress && e.lengthComputable) onProgress(e.loaded/e.total*100); };
+    xhr.onload = () => {
+      const url = xhr.responseText.trim();
+      if (xhr.status===200 && url.startsWith('http')) resolve({ view: url, direct: url });
+      else reject(new Error('Catbox error: ' + xhr.responseText));
+    };
+    xhr.onerror = reject;
+    xhr.send(fd);
+  });
+}
+
+$('uploadBtn').onclick = async () => {
+  if (!pending.length) return;
+  const btn = $('uploadBtn');
+  btn.disabled = true;
+  btn.classList.add('sliding');
+  const box = $('resultsBox');
+  box.style.display = 'block';
+  box.innerHTML = `<div class="results-head"><span>Загрузка файлов</span></div>`;
+
+  const rows = {};
+  pending.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'result-row';
+    row.innerHTML = `<span class="rname">${p.file.name}</span><div class="bar"><i></i></div><span class="mono" style="width:34px;text-align:right;">0%</span>`;
+    box.appendChild(row);
+    rows[p.id] = row;
+  });
+
+  const results = [];
+  for (const p of pending){
+    const row = rows[p.id];
+    const bar = row.querySelector('.bar i');
+    const pct = row.querySelector('span:last-child');
+    const onProgress = (v) => { bar.style.width = v+'%'; pct.textContent = Math.round(v)+'%'; };
+    try{
+      let res;
+      if (p.kind==='image'||p.kind==='gif') res = await uploadToImgbb(p.file, onProgress);
+      else res = await uploadToCatbox(p.file, onProgress);
+      onProgress(100);
+      const data = { name: p.file.name, kind: p.kind, viewUrl: res.view, directUrl: res.direct, ts: Date.now() };
+      const item = { id: crypto.randomUUID(), ...data };
+      results.push(item);
+      if (user) await addLibraryItem(data); // сохраняем в библиотеку только для вошедших пользователей
+    }catch(e){
+      row.innerHTML = `<span class="rname" style="color:var(--danger)">${p.file.name} — ошибка</span>`;
+    }
+  }
+
+  box.innerHTML = `<div class="results-head"><span>Готово · ${results.length} файл(ов)</span></div>`;
+  results.forEach(item => {
+    item._fmt = 'view';
+    const row = document.createElement('div');
+    row.className = 'result-row';
+    row.innerHTML = `
+      <span class="rlink mono" data-id="${item.id}">${item.viewUrl}</span>
+      <button class="copy-mini" data-copy="${item.id}">⧉</button>
+      <div class="link-fmt">
+        <button class="eye-btn" data-eye="${item.id}">👁</button>
+        <div class="eye-menu" id="eye-${item.id}">
+          <button class="active" data-fmt="view" data-id="${item.id}">Ссылка на просмотр</button>
+          <button data-fmt="direct" data-id="${item.id}">Прямая ссылка</button>
+        </div>
+      </div>`;
+    box.appendChild(row);
+    results._map = results._map || {};
+    results._map[item.id] = item;
+  });
+
+  box.querySelectorAll('[data-copy]').forEach(b => b.onclick = () => {
+    const item = results.find(r=>r.id===b.dataset.copy);
+    navigator.clipboard.writeText(item._fmt==='view' ? item.viewUrl : item.directUrl);
+    toast('Ссылка скопирована');
+  });
+  box.querySelectorAll('[data-eye]').forEach(b => b.onclick = (e) => {
+    e.stopPropagation();
+    document.querySelectorAll('.eye-menu').forEach(m=>{ if(m.id!=='eye-'+b.dataset.eye) m.classList.remove('open'); });
+    $('eye-'+b.dataset.eye).classList.toggle('open');
+  });
+  box.querySelectorAll('[data-fmt]').forEach(b => b.onclick = () => {
+    const item = results.find(r=>r.id===b.dataset.id);
+    item._fmt = b.dataset.fmt;
+    const row = b.closest('.result-row');
+    row.querySelector('.rlink').textContent = item._fmt==='view' ? item.viewUrl : item.directUrl;
+    row.querySelectorAll('[data-fmt]').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    $('eye-'+item.id).classList.remove('open');
+  });
+  document.addEventListener('click', () => document.querySelectorAll('.eye-menu').forEach(m=>m.classList.remove('open')));
+
+  btn.textContent = 'Загружено';
+};
+</script>
+</body>
+</html>
