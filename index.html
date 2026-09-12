@@ -143,7 +143,7 @@
   }
   .format-pill i{width:6px;height:6px;border-radius:50%;background:var(--cyan);}
 
-  /* ---------- SHTORKA (upload sheet) ---------- */
+  /* ---------- SHEET ---------- */
   #sheetOverlay{
     position:fixed;inset:0;background:rgba(4,5,8,.55);backdrop-filter:blur(4px);
     z-index:60;opacity:0;visibility:hidden;transition:opacity .3s, visibility .3s;
@@ -203,7 +203,6 @@
   }
   .btn-upload:hover{transform:translateY(-1px);}
   .btn-upload:disabled{opacity:.4;cursor:not-allowed;transform:none;}
-  .btn-upload.sliding{transform:translateX(0);}
 
   .results-box{
     width:340px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);
@@ -295,7 +294,7 @@
     aspect-ratio:1;border-radius:12px;background:var(--surface);border:1px solid var(--border);cursor:pointer;
     position:relative;overflow:hidden;
   }
-  .lib-item img,.lib-item video{width:100%;height:100%;object-fit:cover;}
+  .lib-item img,.lib-item video{width:100%;height:100%;object-fit:cover;display:block;}
   .lib-item .badge{position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,.55);border-radius:6px;padding:2px 5px;font-size:9px;color:#fff;text-transform:uppercase;}
   .lib-item .check{
     position:absolute;top:6px;right:6px;width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,.7);
@@ -315,7 +314,7 @@
   .bulk-bar button:hover{color:var(--text);}
   .bulk-bar button.danger:hover{color:var(--danger);}
 
-  /* file viewer */
+  /* viewer */
   .viewer-overlay{position:fixed;inset:0;background:rgba(2,2,4,.85);z-index:90;display:flex;flex-direction:column;
     align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:.25s;}
   .viewer-overlay.open{opacity:1;visibility:visible;}
@@ -329,7 +328,7 @@
   .viewer-media{max-width:88vw;max-height:80vh;border-radius:14px;overflow:hidden;box-shadow:var(--shadow-lg);}
   .viewer-media img,.viewer-media video,.viewer-media audio{max-width:88vw;max-height:80vh;display:block;}
 
-  /* AUTH gate */
+  /* AUTH */
   .auth-overlay{
     position:fixed;inset:0;background:rgba(4,5,8,.55);backdrop-filter:blur(4px);z-index:70;
     display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:.25s;padding:20px;
@@ -377,25 +376,23 @@
     .account .uname{display:none;}
     .account{padding:4px;gap:8px;}
     .avatar{width:32px;height:32px;font-size:12px;}
-    
+
     main{padding:24px 16px 80px;}
     .hero-label{font-size:11px;margin-bottom:10px;}
     .hero-title{font-size:24px;margin-bottom:24px;}
-    
+
     #dropzone{width:100%;padding:40px 20px;border-radius:16px;}
     .dz-icon{width:48px;height:48px;border-radius:14px;}
     .dz-icon svg{width:20px;height:20px;}
     #dropzone .dz-title{font-size:15px;}
     #dropzone .dz-sub{font-size:12px;}
-    
+
     .formats-row{margin-top:24px;gap:6px;}
     .format-pill{font-size:11px;padding:5px 10px;}
-    
-    /* Sheet mobile */
+
     .sheet-body{flex-direction:column;padding:0;}
     .thumbs-drop{min-width:100%;min-height:80px;padding:12px;}
     .thumb{width:72px;height:72px;border-radius:10px;}
-    .thumb img,.thumb video{object-fit:cover;}
     .add-more{width:72px;height:72px;}
     .sheet-actions{flex-direction:column;width:100%;align-items:stretch;}
     .btn-upload{width:100%;padding:13px 20px;font-size:14px;}
@@ -404,8 +401,7 @@
     .sheet-head h3{font-size:16px;}
     .sheet-head p{font-size:12px;}
     .sheet-close{width:28px;height:28px;}
-    
-    /* Modal mobile */
+
     .modal-overlay{padding:16px;align-items:flex-end;}
     .modal{max-width:100%;max-height:90vh;border-radius:20px 20px 0 0;}
     .modal-pad{padding:20px 18px;}
@@ -414,18 +410,16 @@
     .profile-name-row h2{font-size:18px;}
     .lib-grid{grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:8px;}
     .lib-item{border-radius:10px;}
-    
-    /* Toast mobile */
+
     .toast{bottom:20px;left:16px;right:16px;max-width:none;border-radius:12px;padding:12px 16px;font-size:13px;}
-    
-    /* Auth mobile */
+
     .auth-card{padding:24px 18px;border-radius:20px;}
     .auth-card h2{font-size:18px;}
     .auth-card p{font-size:12px;}
     .field input,.field label{font-size:14px;}
     .btn-primary{padding:13px;font-size:14px;}
   }
-  
+
   @media(max-width:380px){
     .hero-title{font-size:22px;}
     #dropzone{padding:32px 16px;}
@@ -464,13 +458,13 @@
     </div>
 
     <div class="formats-row">
-      <div class="format-pill"><i></i>Изображения / GIF — до 20 МБ</div>
-      <div class="format-pill"><i></i>Видео / Аудио — до 199 МБ</div>
+      <div class="format-pill"><i></i>Изображения — avif, jpg, png, bmp, gif, webp</div>
+      <div class="format-pill"><i></i>Видео — mov, mp4, webm · до 400 МБ</div>
     </div>
   </main>
 </div>
 
-<input type="file" id="fileInput" multiple accept="image/*,video/*,audio/*">
+<input type="file" id="fileInput" multiple accept=".avif,.jpg,.jpeg,.png,.bmp,.gif,.webp,.mov,.mp4,.webm,image/*,video/*">
 
 <!-- Upload sheet -->
 <div id="sheetOverlay"></div>
@@ -567,7 +561,7 @@
 /* =========================================================
    AllToURL
    -----------------------------------------------------------
-   Файлы: ImgBB (картинки/gif) + Catbox (видео/аудио).
+   Загрузка файлов: allwebs.ru (единый эндпоинт).
    Аккаунты и библиотека: Firebase Auth + Firestore.
    ========================================================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
@@ -582,8 +576,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 const CONFIG = {
-  IMGBB_KEY: "9036a0d6a5caf9f166870c6ee5707e47", // ⚠️ см. предупреждение в чате про публичный ключ
-  CATBOX_ENDPOINT: "https://catbox.moe/user/api.php",
+  ALLWEBS_ENDPOINT: "https://allwebs.ru/api/1/upload",
+  ALLWEBS_KEY: "chv_h1Vj_fbdaee8c02a39946d0c40ecd1883464f6cedb2a542deeecc8d4bcdd61bde147a_95d96e65ef7845bc3b5546c38cbe112f36a1c00f9b1a60ea8f706c17446f0c84",
   FIREBASE: {
     apiKey: "AIzaSyBFYHALjo9apuzbXW3fWmOtIe9PEsuC0ic",
     authDomain: "alltourl.firebaseapp.com",
@@ -595,6 +589,10 @@ const CONFIG = {
   }
 };
 
+/* Разрешённые форматы и лимит */
+const ALLOWED_EXT = ['avif','jpg','jpeg','png','bmp','gif','webp','mov','mp4','webm'];
+const MAX_SIZE_BYTES = 400 * 1024 * 1024; // 400 МБ
+
 if (location.protocol === 'file:'){
   const warn = document.createElement('div');
   warn.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999;background:#ff5c7a;color:#1a0006;font:600 13px Inter,sans-serif;padding:10px 16px;text-align:center;';
@@ -603,13 +601,13 @@ if (location.protocol === 'file:'){
 }
 
 const fbApp = initializeApp(CONFIG.FIREBASE);
-try{ getAnalytics(fbApp); }catch(e){ /* analytics недоступна (например, в превью) — не критично */ }
+try{ getAnalytics(fbApp); }catch(e){ /* analytics недоступна — не критично */ }
 const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
 
-let user = null; // {uid, name, email, avatar}
-let library = []; // {id, name, kind, viewUrl, directUrl, ts}
-let pending = [];  // files attached in the sheet, before upload
+let user = null;          // {uid, name, email, avatar}
+let library = [];         // {id, name, kind, viewUrl, directUrl, ts}
+let pending = [];         // files in the sheet before upload
 let selectMode = false;
 let selectedIds = new Set();
 let isRegisterMode = false;
@@ -636,19 +634,16 @@ function toast(msg){
   toastEl._t = setTimeout(()=>toastEl.classList.remove('show'), 2200);
 }
 
-/* ---------------- LOADER / GEO CHECK ---------------- */
+/* ---------------- LOADER ---------------- */
 function initLoader(){
   const done = () => {
     $('loader').classList.add('hidden');
     $('app').classList.add('show');
   };
-  const timer = setTimeout(done, 1000);
+  setTimeout(done, 1000);
   if (navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(
-      () => {}, () => {}, {timeout:900}
-    );
+    navigator.geolocation.getCurrentPosition(()=>{}, ()=>{}, {timeout:900});
   }
-  // всегда открываем сайт через ~1с, независимо от результата геолокации
 }
 initLoader();
 
@@ -659,18 +654,25 @@ onAuthStateChanged(auth, async (fbUser) => {
       const ref = doc(db, 'users', fbUser.uid);
       let snap = await getDoc(ref);
       if (!snap.exists()){
-        const profile = { name: fbUser.displayName || (fbUser.email||'').split('@')[0], email: fbUser.email || '', avatar: fbUser.photoURL || null };
+        const profile = {
+          name: fbUser.displayName || (fbUser.email||'').split('@')[0],
+          email: fbUser.email || '',
+          avatar: fbUser.photoURL || null
+        };
         await setDoc(ref, profile);
         snap = await getDoc(ref);
       }
-      const d = snap.data();
-      user = { uid: fbUser.uid, name: d.name, email: d.email, avatar: d.avatar };
+      const d = snap.data() || {};
+      user = { uid: fbUser.uid, name: d.name || fbUser.displayName || '', email: d.email || fbUser.email || '', avatar: d.avatar || null };
       await loadLibrary();
     }catch(e){
-      // Firestore недоступен (например, правила ещё не настроены) — не блокируем вход,
-      // показываем профиль на основе данных из самого аккаунта, без библиотеки.
       console.warn('Firestore profile/library sync failed:', e);
-      user = { uid: fbUser.uid, name: fbUser.displayName || (fbUser.email||'').split('@')[0], email: fbUser.email || '', avatar: fbUser.photoURL || null };
+      user = {
+        uid: fbUser.uid,
+        name: fbUser.displayName || (fbUser.email||'').split('@')[0],
+        email: fbUser.email || '',
+        avatar: fbUser.photoURL || null
+      };
       library = [];
       toast('Вход выполнен, но библиотека/профиль не синхронизируются — проверьте правила Firestore');
     }
@@ -682,10 +684,15 @@ onAuthStateChanged(auth, async (fbUser) => {
 });
 
 async function loadLibrary(){
-  if (!user) { library = []; return; }
-  const q = query(collection(db, 'users', user.uid, 'library'), orderBy('ts','desc'));
-  const snaps = await getDocs(q);
-  library = snaps.docs.map(d => ({ id: d.id, ...d.data() }));
+  if (!user){ library = []; return; }
+  try{
+    const q = query(collection(db, 'users', user.uid, 'library'), orderBy('ts','desc'));
+    const snaps = await getDocs(q);
+    library = snaps.docs.map(d => ({ id: d.id, ...d.data() })).filter(i => i && (i.viewUrl || i.directUrl));
+  }catch(e){
+    console.warn('loadLibrary failed:', e);
+    library = [];
+  }
 }
 async function saveUserField(fields){
   await updateDoc(doc(db, 'users', user.uid), fields);
@@ -697,14 +704,15 @@ async function addLibraryItem(item){
 }
 async function removeLibraryItems(ids){
   for (const id of ids){
-    await deleteDoc(doc(db, 'users', user.uid, 'library', id));
+    try{ await deleteDoc(doc(db, 'users', user.uid, 'library', id)); }catch(e){ console.warn(e); }
   }
   library = library.filter(i => !ids.includes(i.id));
 }
+
 function renderAccount(){
   if (user){
-    $('unameLabel').textContent = user.name;
-    $('profileName').textContent = user.name;
+    $('unameLabel').textContent = user.name || 'Профиль';
+    $('profileName').textContent = user.name || 'Профиль';
     $('profileEmail').textContent = user.email || '';
     setAvatarNode($('headerAvatar'), user);
     setAvatarNode($('avatarLg'), user);
@@ -714,14 +722,16 @@ function renderAccount(){
   }
 }
 function setAvatarNode(node, u){
+  if (!node) return;
   if (u && u.avatar){
-    node.style.backgroundImage = `url(${u.avatar})`;
+    node.style.backgroundImage = `url("${u.avatar}")`;
     node.textContent = '';
   } else {
     node.style.backgroundImage = '';
     node.textContent = (u && u.name ? u.name[0] : 'Г').toUpperCase();
   }
 }
+
 /* ---------------- AUTH MODAL ---------------- */
 $('accountBtn').onclick = () => {
   if (user) openProfile();
@@ -770,6 +780,7 @@ $('authGoogle').onclick = async () => {
 
 /* ---------------- PROFILE MODAL ---------------- */
 function openProfile(){
+  renderAccount();
   renderLibrary();
   $('profileOverlay').classList.add('open');
 }
@@ -783,11 +794,11 @@ $('avatarLg').onclick = () => {
     if (!inp.files[0]) return;
     toast('Загружаем аватар…');
     try{
-      const url = await uploadToImgbb(inp.files[0]);
-      await saveUserField({ avatar: url });
+      const res = await uploadToAllwebs(inp.files[0]);
+      await saveUserField({ avatar: res.direct });
       renderAccount();
       toast('Аватар обновлён');
-    }catch(e){ toast('Не удалось загрузить аватар'); }
+    }catch(e){ toast('Не удалось загрузить аватар: ' + (e.message||'')); }
   };
   inp.click();
 };
@@ -811,17 +822,25 @@ $('logoutBtn').onclick = async () => {
   toast('Вы вышли из аккаунта');
 };
 
+/* ---------------- LIBRARY ---------------- */
 function renderLibrary(){
   const grid = $('libGrid');
   grid.innerHTML = '';
+
   if (!library.length){
     grid.innerHTML = '<div class="lib-empty" style="grid-column:1/-1;">Пока нет загруженных файлов</div>';
     return;
   }
-  library.slice().reverse().forEach(item => {
+
+  // Библиотека уже упорядочена — новые записи unshift'им при добавлении,
+  // из Firestore — orderBy('ts','desc'). Никакого reverse() тут не нужно.
+  library.forEach(item => {
+    if (!item || (!item.viewUrl && !item.directUrl)) return;
+    const src = item.viewUrl || item.directUrl;
     const el = document.createElement('div');
     el.className = 'lib-item' + (selectedIds.has(item.id) ? ' selected' : '');
-    el.innerHTML = mediaThumb(item) + `<div class="badge">${item.kind}</div><div class="check"></div>`;
+    el.innerHTML = mediaThumb(item, src) +
+      `<div class="badge">${item.kind || 'file'}</div><div class="check"></div>`;
     el.onclick = () => {
       if (selectMode){ toggleSelect(item.id); renderLibrary(); }
       else openViewer(item);
@@ -829,10 +848,20 @@ function renderLibrary(){
     grid.appendChild(el);
   });
 }
-function mediaThumb(item){
-  if (item.kind==='image'||item.kind==='gif') return `<img src="${item.viewUrl}" loading="lazy">`;
-  if (item.kind==='video') return `<video src="${item.viewUrl}" muted></video>`;
+
+function mediaThumb(item, src){
+  const safe = escapeAttr(src);
+  if (item.kind === 'image' || item.kind === 'gif'){
+    return `<img src="${safe}" loading="lazy" decoding="async" alt="" onerror="this.style.opacity='.25'">`;
+  }
+  if (item.kind === 'video'){
+    return `<video src="${safe}" muted preload="metadata" playsinline onerror="this.style.opacity='.25'"></video>`;
+  }
   return `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-dim);font-size:22px;">♪</div>`;
+}
+
+function escapeAttr(s){
+  return String(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 $('libSelectBtn').onclick = () => {
@@ -848,9 +877,14 @@ function toggleSelect(id){
   updateSelCount();
 }
 function updateSelCount(){ $('selCount').textContent = selectedIds.size; }
-$('cancelSelect').onclick = () => { selectMode=false; selectedIds.clear(); $('bulkBar').style.display='none'; $('libSelectBtn').textContent='Выбрать'; renderLibrary(); };
+$('cancelSelect').onclick = () => {
+  selectMode=false; selectedIds.clear();
+  $('bulkBar').style.display='none';
+  $('libSelectBtn').textContent='Выбрать';
+  renderLibrary();
+};
 $('copySelected').onclick = () => {
-  const links = library.filter(i=>selectedIds.has(i.id)).map(i=>i.directUrl).join('\n');
+  const links = library.filter(i=>selectedIds.has(i.id)).map(i=>i.directUrl || i.viewUrl).join('\n');
   if (!links){ toast('Ничего не выбрано'); return; }
   navigator.clipboard.writeText(links);
   toast('Ссылки скопированы');
@@ -866,20 +900,24 @@ $('deleteSelected').onclick = async () => {
 let viewerItem = null;
 function openViewer(item){
   viewerItem = item;
+  const src = escapeAttr(item.viewUrl || item.directUrl);
   const box = $('viewerMedia');
-  if (item.kind==='image'||item.kind==='gif') box.innerHTML = `<img src="${item.viewUrl}">`;
-  else if (item.kind==='video') box.innerHTML = `<video src="${item.viewUrl}" controls autoplay></video>`;
-  else box.innerHTML = `<audio src="${item.viewUrl}" controls autoplay style="width:340px;"></audio>`;
+  if (item.kind==='image'||item.kind==='gif') box.innerHTML = `<img src="${src}">`;
+  else if (item.kind==='video') box.innerHTML = `<video src="${src}" controls autoplay playsinline></video>`;
+  else box.innerHTML = `<audio src="${src}" controls autoplay style="width:340px;"></audio>`;
   $('viewerOverlay').classList.add('open');
 }
 $('viewerClose').onclick = () => $('viewerOverlay').classList.remove('open');
+$('viewerOverlay').addEventListener('click', e => { if(e.target.id==='viewerOverlay') $('viewerOverlay').classList.remove('open'); });
 $('viewerSelect').onclick = () => {
+  if (!viewerItem) return;
   $('viewerOverlay').classList.remove('open');
   selectMode = true; selectedIds.add(viewerItem.id);
   $('bulkBar').style.display='flex'; $('libSelectBtn').textContent='Готово';
   updateSelCount(); renderLibrary();
 };
 $('viewerDelete').onclick = async () => {
+  if (!viewerItem) return;
   await removeLibraryItems([viewerItem.id]);
   $('viewerOverlay').classList.remove('open');
   renderLibrary();
@@ -890,7 +928,7 @@ $('viewerDelete').onclick = async () => {
 const dropzone = $('dropzone');
 const fileInput = $('fileInput');
 dropzone.onclick = () => fileInput.click();
-fileInput.onchange = () => handleNewFiles([...fileInput.files]);
+fileInput.onchange = () => { handleNewFiles([...fileInput.files]); fileInput.value=''; };
 
 ['dragover','dragleave','drop'].forEach(evt => {
   dropzone.addEventListener(evt, e => {
@@ -918,21 +956,35 @@ const thumbsDrop = $('thumbsDrop');
 });
 $('addMoreBtn').onclick = () => fileInput.click();
 
+function getExt(name){
+  return (name.split('.').pop() || '').toLowerCase();
+}
 function fileKind(file){
-  if (file.type.includes('gif')) return 'gif';
-  if (file.type.startsWith('image/')) return 'image';
-  if (file.type.startsWith('video/')) return 'video';
-  if (file.type.startsWith('audio/')) return 'audio';
-  return null;
+  const ext = getExt(file.name);
+  if (!ALLOWED_EXT.includes(ext)){
+    // fallback на MIME-тип, если расширения нет/некорректное
+    if (file.type.includes('gif')) return 'gif';
+    if (file.type.startsWith('image/')) return 'image';
+    if (file.type.startsWith('video/')) return 'video';
+    return null;
+  }
+  if (ext === 'gif') return 'gif';
+  if (['avif','jpg','jpeg','png','bmp','webp'].includes(ext)) return 'image';
+  return 'video'; // mov, mp4, webm
 }
 function handleNewFiles(files){
   const accepted = [];
   for (const f of files){
     const kind = fileKind(f);
-    if (!kind){ toast(`Формат «${f.name}» не поддерживается`); continue; }
-    const limit = (kind==='image'||kind==='gif') ? 20*1024*1024 : 199*1024*1024;
-    if (f.size > limit){ toast(`«${f.name}» превышает лимит (${kind==='video'||kind==='audio'?'199':'20'} МБ)`); continue; }
-    accepted.push({file:f, kind, id: crypto.randomUUID(), progress:0, status:'pending'});
+    if (!kind){
+      toast(`Формат «${f.name}» не поддерживается`);
+      continue;
+    }
+    if (f.size > MAX_SIZE_BYTES){
+      toast(`«${f.name}» превышает лимит 400 МБ`);
+      continue;
+    }
+    accepted.push({ file: f, kind, id: crypto.randomUUID(), progress: 0, status: 'pending' });
   }
   if (!accepted.length) return;
   pending.push(...accepted);
@@ -956,6 +1008,7 @@ function closeSheet(){
   }, 350);
 }
 $('sheetClose').onclick = closeSheet;
+$('sheetOverlay').onclick = closeSheet;
 
 function renderThumbs(){
   thumbsDrop.querySelectorAll('.thumb').forEach(n=>n.remove());
@@ -963,8 +1016,8 @@ function renderThumbs(){
     const el = document.createElement('div');
     el.className = 'thumb';
     const url = URL.createObjectURL(p.file);
-    if (p.kind==='image'||p.kind==='gif') el.innerHTML = `<img src="${url}">`;
-    else if (p.kind==='video') el.innerHTML = `<video src="${url}" muted></video>`;
+    if (p.kind==='image'||p.kind==='gif') el.innerHTML = `<img src="${url}" alt="">`;
+    else if (p.kind==='video') el.innerHTML = `<video src="${url}" muted playsinline></video>`;
     else el.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:22px;color:var(--text-dim);">♪</div>`;
     el.innerHTML += `<div class="kind">${p.kind}</div><div class="remove" data-id="${p.id}">✕</div>`;
     el.querySelector('.remove').onclick = (e) => {
@@ -977,39 +1030,43 @@ function renderThumbs(){
   $('uploadBtn').disabled = pending.length===0;
 }
 
-/* ---------------- UPLOAD LOGIC ---------------- */
-async function uploadToImgbb(file, onProgress){
+/* ---------------- UPLOAD LOGIC (allwebs.ru) ---------------- */
+async function uploadToAllwebs(file, onProgress){
   return new Promise((resolve, reject) => {
     const fd = new FormData();
-    fd.append('image', file);
+    fd.append('source', file, file.name);
+
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', `https://api.imgbb.com/1/upload?key=${CONFIG.IMGBB_KEY}`);
-    xhr.upload.onprogress = (e) => { if (onProgress && e.lengthComputable) onProgress(e.loaded/e.total*100); };
-    xhr.onload = () => {
-      try{
-        const res = JSON.parse(xhr.responseText);
-        if (res.success) resolve({ view: res.data.url_viewer || res.data.url, direct: res.data.image?.url || res.data.url });
-        else reject(new Error(res.error?.message || 'ImgBB отклонил файл'));
-      }catch(e){ reject(new Error('Некорректный ответ ImgBB')); }
+    xhr.open('POST', CONFIG.ALLWEBS_ENDPOINT, true);
+    xhr.setRequestHeader('X-API-Key', CONFIG.ALLWEBS_KEY);
+
+    xhr.upload.onprogress = (e) => {
+      if (onProgress && e.lengthComputable) onProgress(e.loaded / e.total * 100);
     };
-    xhr.onerror = () => reject(new Error('Сетевая ошибка при обращении к ImgBB'));
-    xhr.send(fd);
-  });
-}
-async function uploadToCatbox(file, onProgress){
-  return new Promise((resolve, reject) => {
-    const fd = new FormData();
-    fd.append('reqtype','fileupload');
-    fd.append('fileToUpload', file);
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', CONFIG.CATBOX_ENDPOINT);
-    xhr.upload.onprogress = (e) => { if (onProgress && e.lengthComputable) onProgress(e.loaded/e.total*100); };
+
     xhr.onload = () => {
-      const url = xhr.responseText.trim();
-      if (xhr.status===200 && url.startsWith('http')) resolve({ view: url, direct: url });
-      else reject(new Error(`Catbox вернул ошибку (код ${xhr.status}): ${url || 'пустой ответ'}`));
+      let res = null;
+      try { res = JSON.parse(xhr.responseText); } catch(_){ /* not json */ }
+
+      if (xhr.status >= 200 && xhr.status < 300 && res){
+        // Универсальный парсер: пробуем разные формы ответа
+        const url =
+          res?.image?.url ||
+          res?.data?.image?.url ||
+          res?.data?.url ||
+          res?.file?.url ||
+          res?.url ||
+          (typeof res === 'string' ? res : null);
+        if (url && /^https?:\/\//i.test(url)){
+          const thumb = res?.image?.thumb?.url || res?.data?.image?.thumb?.url || url;
+          return resolve({ view: url, direct: url, thumb });
+        }
+      }
+      const errMsg = res?.error?.message || res?.message || res?.status_txt || `allwebs ошибка (${xhr.status})`;
+      reject(new Error(errMsg));
     };
-    xhr.onerror = () => reject(new Error('Сетевая ошибка при обращении к Catbox (возможно, блокировка CORS)'));
+    xhr.onerror = () => reject(new Error('Сетевая ошибка allwebs (возможен CORS)'));
+    xhr.ontimeout = () => reject(new Error('Таймаут allwebs'));
     xhr.send(fd);
   });
 }
@@ -1018,7 +1075,7 @@ $('uploadBtn').onclick = async () => {
   if (!pending.length) return;
   const btn = $('uploadBtn');
   btn.disabled = true;
-  btn.classList.add('sliding');
+
   const box = $('resultsBox');
   box.style.display = 'block';
   box.innerHTML = `<div class="results-head"><span id="resultsHeadText">Загрузка файлов</span></div>`;
@@ -1027,40 +1084,50 @@ $('uploadBtn').onclick = async () => {
   pending.forEach(p => {
     const row = document.createElement('div');
     row.className = 'result-row';
-    row.innerHTML = `<span class="rname">${p.file.name}</span><div class="bar"><i></i></div><span class="mono" style="width:34px;text-align:right;">0%</span>`;
+    row.innerHTML = `<span class="rname">${escapeAttr(p.file.name)}</span><div class="bar"><i></i></div><span class="mono" style="width:34px;text-align:right;">0%</span>`;
     box.appendChild(row);
     rows[p.id] = row;
   });
 
   const results = [];
   let failCount = 0;
+
   for (const p of pending){
     const row = rows[p.id];
     const bar = row.querySelector('.bar i');
     const pct = row.querySelector('span:last-child');
-    const onProgress = (v) => { bar.style.width = v+'%'; pct.textContent = Math.round(v)+'%'; };
+    const onProgress = (v) => { bar.style.width = v + '%'; pct.textContent = Math.round(v) + '%'; };
+
     try{
-      let res;
-      if (p.kind==='image'||p.kind==='gif') res = await uploadToImgbb(p.file, onProgress);
-      else res = await uploadToCatbox(p.file, onProgress);
+      const res = await uploadToAllwebs(p.file, onProgress);
       onProgress(100);
-      const data = { name: p.file.name, kind: p.kind, viewUrl: res.view, directUrl: res.direct, ts: Date.now() };
+      const data = {
+        name: p.file.name,
+        kind: p.kind,
+        viewUrl: res.view,
+        directUrl: res.direct,
+        ts: Date.now()
+      };
       const item = { id: crypto.randomUUID(), ...data };
       results.push(item);
-      if (user) await addLibraryItem(data); // сохраняем в библиотеку только для вошедших пользователей
+      if (user){
+        try { await addLibraryItem(data); }
+        catch(e){ console.warn('addLibraryItem failed:', e); }
+      }
     }catch(e){
       failCount++;
-      row.innerHTML = `<span class="rname" style="color:var(--danger)" title="${(e.message||'').replace(/"/g,'')}">${p.file.name} — ${e.message || 'ошибка'}</span>`;
+      row.innerHTML = `<span class="rname" style="color:var(--danger)" title="${escapeAttr(e.message||'')}">${escapeAttr(p.file.name)} — ${escapeAttr(e.message||'ошибка')}</span>`;
     }
   }
 
   $('resultsHeadText').textContent = `Готово · ${results.length} файл(ов)` + (failCount ? `, ошибок: ${failCount}` : '');
+
   results.forEach(item => {
     item._fmt = 'view';
     const row = document.createElement('div');
     row.className = 'result-row';
     row.innerHTML = `
-      <span class="rlink mono" data-id="${item.id}">${item.viewUrl}</span>
+      <span class="rlink mono" data-id="${item.id}">${escapeAttr(item.viewUrl)}</span>
       <button class="copy-mini" data-copy="${item.id}">⧉</button>
       <div class="link-fmt">
         <button class="eye-btn" data-eye="${item.id}">👁</button>
@@ -1070,12 +1137,11 @@ $('uploadBtn').onclick = async () => {
         </div>
       </div>`;
     box.appendChild(row);
-    results._map = results._map || {};
-    results._map[item.id] = item;
   });
 
   box.querySelectorAll('[data-copy]').forEach(b => b.onclick = () => {
     const item = results.find(r=>r.id===b.dataset.copy);
+    if (!item) return;
     navigator.clipboard.writeText(item._fmt==='view' ? item.viewUrl : item.directUrl);
     toast('Ссылка скопирована');
   });
@@ -1086,6 +1152,7 @@ $('uploadBtn').onclick = async () => {
   });
   box.querySelectorAll('[data-fmt]').forEach(b => b.onclick = () => {
     const item = results.find(r=>r.id===b.dataset.id);
+    if (!item) return;
     item._fmt = b.dataset.fmt;
     const row = b.closest('.result-row');
     row.querySelector('.rlink').textContent = item._fmt==='view' ? item.viewUrl : item.directUrl;
@@ -1096,6 +1163,7 @@ $('uploadBtn').onclick = async () => {
   document.addEventListener('click', () => document.querySelectorAll('.eye-menu').forEach(m=>m.classList.remove('open')));
 
   btn.textContent = 'Загружено';
+  btn.disabled = false;
 };
 </script>
 </body>
